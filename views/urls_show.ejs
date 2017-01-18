@@ -6,7 +6,7 @@
   <body>
     <header>
       <h1>ShortURL: <%= shortURL %></h1>
-    </header>
+    </header> 
     <form method="POST" action=<%= `/urls/${shortURL}/update` %>>
       <input name="longURL" type="text" size=30 value=<%= urls[shortURL] %>/>
       <button type="submit">Update</input>

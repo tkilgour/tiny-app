@@ -5,11 +5,11 @@
   </head>
   <body>
     <% include ../views/partials/_header %>
-    <ul>
+    <ul style="list-style: none;">
       <% for (url in urls) {%>
         <li>
           <form method="POST" action=<%= `/urls/${url}/delete` %>>
-            <%= urls[url] %> – <%= url %>
+            <%= urls[url] %> → <%= url %>
             <a href=<%= `${url}` %>>Edit</a>
             <button type="submit">Delete 🗑</button>
           </form>
