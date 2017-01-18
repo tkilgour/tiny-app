@@ -7,9 +7,13 @@
     <% include ../views/partials/_header %>
     <ul>
       <% for (url in urls) {%>
-      <li><%= urls[url] %> – <%= url %></li>
+        <form method="POST" action=<%= `/urls/${url}/delete` %>>
+          <li><%= urls[url] %> – <%= url %>
+          <button type="submit">Delete 🗑</button>
+        </form>
+      </li>
       <% } %>
     </ul>
-    <a href="">Create new shortened URL</a>
+    <a href="/urls/new">Create new shortened URL</a>
   </body>
 </html>

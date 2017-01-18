@@ -23,7 +23,7 @@ app.use(bodyParser.urlencoded({extended:true}));
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-  res.end('Hello!');
+  res.send('Hello!');
 });
 
 app.get('/urls', (req, res) => {
@@ -55,12 +55,18 @@ app.get('/urls/new', (req, res) => {
 });
 
 app.get('/hello', (req, res) => {
-  res.end("<html><body>Hello <em>World</em></body></html>\n")
+  res.send("<html><body>Hello <em>World</em></body></html>\n")
 });
 
 app.get('/u/:shortURL', (req, res) => {
   let longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
+});
+
+app.post('/urls/:shortURL/delete', (req, res) => {
+  let shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect('/urls');
 });
 
 app.listen(PORT, () => {
