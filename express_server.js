@@ -35,7 +35,7 @@ app.post('/urls/create', (req, res) => {
   let shortURL = generateRandomString();
   let longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
-  res.redirect(`http://localhost:8080/${shortURL}`);
+  res.redirect(`/urls`);
 });
 
 app.get('/:id', (req, res) => {
