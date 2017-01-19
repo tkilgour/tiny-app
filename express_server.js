@@ -6,6 +6,7 @@ const urlDatabase = {
   '9sm5xK': 'http://www.google.com'
 };
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 
 function generateRandomString() {
   let randomString = "";
@@ -19,6 +20,7 @@ function generateRandomString() {
 }
 
 app.use(bodyParser.urlencoded({extended:true}));
+app.use(cookieParser());
 
 app.set('view engine', 'ejs');
 
@@ -27,7 +29,10 @@ app.get('/', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  let templateVars = {
+    username: req.cookies["username"],
+    urls: urlDatabase,
+  };
   res.render('urls_index', templateVars);
 });
 
@@ -40,6 +45,7 @@ app.post('/urls/create', (req, res) => {
 
 app.get('/:id', (req, res) => {
   let templateVars = {
+    username: req.cookies["username"],
     shortURL: req.params.id,
     urls: urlDatabase
   };
@@ -74,6 +80,16 @@ app.post('/urls/:shortURL/update', (req, res) => {
   let longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
   res.redirect('/urls');
+});
+
+app.post('/login', (req, res) => {
+  res.cookie('username', req.body.username);
+  res.redirect('/');
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
+  res.redirect('/');
 });
 
 app.listen(PORT, () => {
