@@ -1,15 +1,13 @@
 <header>
   <h1>TinyApp</h1>
-    <% if (username) { %>
+    <% if (user_id) { %>                          <!-- if user is logged in -->
       <form method="POST" action="/logout">
-        <h4>Hello, <%= username %>!
+        <h4><%= user_email %>
           <input type="submit" value="Logout">
         </h4>
       </form>
-    <% } else { %>
-      <form method="POST" action="/login">
-        <input type="text" name="username">
-        <input type="submit" value="Submit">
-      </form>
+    <% } else { %>                                <!-- else user is logged out -->
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
     <% } %>
 </header>

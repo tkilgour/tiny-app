@@ -8,7 +8,13 @@ const urlDatabase = {
   'b2xVn2': 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com'
 };
-const users = {};
+const users = {
+  'cuPSUz': {
+    'id': 'cuPSUz',
+    'email': 'bobblobbob@gmail.com',
+    'password': 'pencil123'
+  }
+};
 
 function generateRandomString() {
   let randomString = "";
@@ -32,8 +38,11 @@ app.get('/', (req, res) => {
 
 app.get('/urls', (req, res) => {
   let templateVars = {
-    username: req.cookies["username"],
+    user_id: req.cookies['user_id'],
     urls: urlDatabase,
+  };
+  if (templateVars.user_id) {
+    templateVars.user_email = users[templateVars.user_id].email;
   };
   res.render('urls_index', templateVars);
 });
@@ -76,19 +85,45 @@ app.post('/urls/:shortURL/update', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username);
-  res.redirect('/');
+  const email = req.body.email;
+  const password = req.body.password;
+  let loginPassed = false;
+  let currentUser = "";
+
+  for (let user in users) {
+    if (users[user].email === email) {
+      if (users[user].password === password) {
+        loginPassed = true;
+        currentUser = user;
+      }
+    }
+  }
+
+  if (loginPassed) {
+    res.cookie('user_id', currentUser);
+    res.redirect('/')
+  } else {
+    res.sendStatus(403);
+  }
+
+  // res.cookie('username', req.body.username);
+  // res.redirect('/');
+});
+
+app.get('/login', (req, res) => {
+  res.render('urls_login')
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/');
 });
 
 app.get('/register', (req, res) => {
   let templateVars = {
-    username: req.cookies["username"],
-    urls: urlDatabase,
+    // user_id: req.cookies['user_id'],
+    // users: users,
+    // urls: urlDatabase,
   };
   res.render('urls_register', templateVars);
 });
@@ -114,19 +149,18 @@ app.post('/register', (req, res) => {
     users[userID].email = email;
     users[userID].password = password;
     res.cookie('user_id', userID);
-    // res.send(users);
     res.redirect('/');
   }
 });
 
-app.get('/:id', (req, res) => {
-  let templateVars = {
-    username: req.cookies["username"],
-    shortURL: req.params.id,
-    urls: urlDatabase
-  };
-  res.render('urls_show', templateVars);
-});
+// app.get('/:id', (req, res) => {
+//   let templateVars = {
+//     user_id: req.cookies["user_id"],
+//     shortURL: req.params.id,
+//     urls: urlDatabase
+//   };
+//   res.render('urls_show', templateVars);
+// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
