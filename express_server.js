@@ -1,12 +1,14 @@
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 8080; // default port 8080
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+
 const urlDatabase = {
   'b2xVn2': 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com'
 };
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
+const users = {};
 
 function generateRandomString() {
   let randomString = "";
@@ -41,15 +43,6 @@ app.post('/urls/create', (req, res) => {
   let longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
   res.redirect(`/urls`);
-});
-
-app.get('/:id', (req, res) => {
-  let templateVars = {
-    username: req.cookies["username"],
-    shortURL: req.params.id,
-    urls: urlDatabase
-  };
-  res.render('urls_show', templateVars);
 });
 
 app.get('/urls.json', (req, res) => {
@@ -90,6 +83,49 @@ app.post('/login', (req, res) => {
 app.post('/logout', (req, res) => {
   res.clearCookie('username');
   res.redirect('/');
+});
+
+app.get('/register', (req, res) => {
+  let templateVars = {
+    username: req.cookies["username"],
+    urls: urlDatabase,
+  };
+  res.render('urls_register', templateVars);
+});
+
+app.post('/register', (req, res) => {
+  const userID = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+
+  function checkIfEmailExists (data) {
+    for (let user in data) {
+      return data[user]['email'] === email;
+    };
+  }
+
+  if (!email || !password) {
+    res.sendStatus(400);
+  } else if (checkIfEmailExists(users)) {
+    res.sendStatus(400);
+  } else {
+    users[userID] = {};
+    users[userID].id = userID;
+    users[userID].email = email;
+    users[userID].password = password;
+    res.cookie('user_id', userID);
+    // res.send(users);
+    res.redirect('/');
+  }
+});
+
+app.get('/:id', (req, res) => {
+  let templateVars = {
+    username: req.cookies["username"],
+    shortURL: req.params.id,
+    urls: urlDatabase
+  };
+  res.render('urls_show', templateVars);
 });
 
 app.listen(PORT, () => {
