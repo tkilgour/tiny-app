@@ -5,14 +5,16 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
 const urlDatabase = {
-  'b2xVn2': 'http://www.lighthouselabs.ca',
-  '9sm5xK': 'http://www.google.com'
+  'cuPSUz': {
+    '9sm5xK': 'http://www.google.com',
+    '52xa12': 'http://www.lighthouselabs.ca',
+  }
 };
 const users = {
   'cuPSUz': {
     'id': 'cuPSUz',
-    'email': 'bobblobbob@gmail.com',
-    'password': 'pencil123'
+    'email': 't.kilgour@gmail.com',
+    'password': 'hello'
   }
 };
 
@@ -27,6 +29,15 @@ function generateRandomString() {
   return randomString;
 }
 
+function getCurrentUser(req) {
+  for (user in users) {
+    if (req.cookies['user_id'] === user) {
+      return user;
+    }
+  }
+  return "";
+}
+
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(cookieParser());
 
@@ -36,30 +47,52 @@ app.get('/', (req, res) => {
   res.send('Hello!');
 });
 
+
 app.get('/urls', (req, res) => {
+  const currentUser = getCurrentUser(req);
+
   let templateVars = {
     user_id: req.cookies['user_id'],
-    urls: urlDatabase,
+    urls: urlDatabase[currentUser],
+    user_email: ''
   };
-  if (templateVars.user_id) {
+  if (currentUser != '') {
     templateVars.user_email = users[templateVars.user_id].email;
   };
   res.render('urls_index', templateVars);
 });
 
+
 app.post('/urls/create', (req, res) => {
+  const currentUser = getCurrentUser(req);
+
+  if (currentUser === '') {
+    res.sendStatus(403);
+  };
+
   let shortURL = generateRandomString();
   let longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[currentUser][shortURL] = longURL;
   res.redirect(`/urls`);
 });
+
 
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
 
 app.get('/urls/new', (req, res) => {
-  res.render('urls_new');
+  const currentUser = getCurrentUser(req);
+
+  let templateVars = {
+    user_id: req.cookies['user_id'],
+    urls: urlDatabase[currentUser],
+    user_email: ''
+  };
+  if (getCurrentUser(req) != '') {
+    templateVars.user_email = users[templateVars.user_id].email;
+  };
+  res.render('urls_new', templateVars);
 });
 
 app.get('/hello', (req, res) => {
@@ -72,15 +105,19 @@ app.get('/u/:shortURL', (req, res) => {
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
+  const currentUser = getCurrentUser(req);
+
   let shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
+  delete urlDatabase[currentUser][shortURL];
   res.redirect('/urls');
 });
 
 app.post('/urls/:shortURL/update', (req, res) => {
+  const currentUser = getCurrentUser(req);
+
   let shortURL = req.params.shortURL;
   let longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[currentUser][shortURL] = longURL;
   res.redirect('/urls');
 });
 
@@ -105,9 +142,6 @@ app.post('/login', (req, res) => {
   } else {
     res.sendStatus(403);
   }
-
-  // res.cookie('username', req.body.username);
-  // res.redirect('/');
 });
 
 app.get('/login', (req, res) => {
@@ -120,12 +154,7 @@ app.post('/logout', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  let templateVars = {
-    // user_id: req.cookies['user_id'],
-    // users: users,
-    // urls: urlDatabase,
-  };
-  res.render('urls_register', templateVars);
+  res.render('urls_register');
 });
 
 app.post('/register', (req, res) => {
@@ -148,19 +177,29 @@ app.post('/register', (req, res) => {
     users[userID].id = userID;
     users[userID].email = email;
     users[userID].password = password;
+
+    urlDatabase[userID] = {};
+
     res.cookie('user_id', userID);
     res.redirect('/');
   }
 });
 
-// app.get('/:id', (req, res) => {
-//   let templateVars = {
-//     user_id: req.cookies["user_id"],
-//     shortURL: req.params.id,
-//     urls: urlDatabase
-//   };
-//   res.render('urls_show', templateVars);
-// });
+app.get('/urls/:shortURL', (req, res) => {
+
+  const currentUser = getCurrentUser(req);
+
+  let templateVars = {
+    user_id: req.cookies['user_id'],
+    urls: urlDatabase[currentUser],
+    user_email: '',
+    shortURL: req.params.shortURL,
+  };
+  if (getCurrentUser(req) != '') {
+    templateVars.user_email = users[templateVars.user_id].email;
+  };
+  res.render('urls_show', templateVars);
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
