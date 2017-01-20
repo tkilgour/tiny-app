@@ -4,6 +4,7 @@ const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
+const methodOverride = require('method-override');
 
 const urlDatabase = {
   'cuPSUz': {
@@ -45,6 +46,7 @@ app.use(cookieSession({
   keys: ['BrmrMunuQnTFo5L7'],
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
+app.use(methodOverride('_method'));
 
 app.set('view engine', 'ejs');
 
@@ -121,7 +123,7 @@ app.get('/u/:shortURL', (req, res) => {
   }
 });
 
-app.post('/urls/:shortURL/delete', (req, res) => {
+app.delete('/urls/:shortURL', (req, res) => {
   const currentUser = getCurrentUser(req);
 
   let shortURL = req.params.shortURL;
@@ -129,7 +131,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   res.redirect('/urls');
 });
 
-app.post('/urls/:shortURL/update', (req, res) => {
+app.put('/urls/:shortURL', (req, res) => {
   const currentUser = getCurrentUser(req);
 
   let shortURL = req.params.shortURL;

@@ -8,7 +8,7 @@
     <ul style="list-style: none;">
       <% for (url in urls) {%>
         <li>
-          <form method="POST" action=<%= `/urls/${url}/delete` %>>
+          <form method="POST" action=<%= `/urls/${url}?_method=DELETE` %>>
             <%= urls[url] %> → <%= url %>
             <a href=<%= `/urls/${url}` %>>Edit</a>
             <button type="submit">Delete 🗑</button>
