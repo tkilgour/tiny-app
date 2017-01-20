@@ -3,6 +3,7 @@ const app = express();
 const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 
 const urlDatabase = {
   'cuPSUz': {
@@ -14,7 +15,7 @@ const users = {
   'cuPSUz': {
     'id': 'cuPSUz',
     'email': 't.kilgour@gmail.com',
-    'password': 'hello'
+    'password': '$2a$10$3OJZumyWTp0p8DBABJP5tO9KXU7kHEKjU2RqH6zUxG5ifXhSOihfy'
   }
 };
 
@@ -141,8 +142,9 @@ app.post('/login', (req, res) => {
 
   for (let user in users) {
     if (users[user].email === email) {
-      if (users[user].password === password) {
-        loginPassed = true;
+
+      loginPassed = bcrypt.compareSync(password, users[user].password);
+      if (loginPassed) {
         currentUser = user;
       }
     }
@@ -173,6 +175,7 @@ app.post('/register', (req, res) => {
   const userID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  const hashed_password = bcrypt.hashSync(password, 10);
 
   function checkIfEmailExists (data) {
     for (let user in data) {
@@ -188,7 +191,7 @@ app.post('/register', (req, res) => {
     users[userID] = {};
     users[userID].id = userID;
     users[userID].email = email;
-    users[userID].password = password;
+    users[userID].password = hashed_password;
 
     urlDatabase[userID] = {};
 
