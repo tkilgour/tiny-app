@@ -100,8 +100,20 @@ app.get('/hello', (req, res) => {
 });
 
 app.get('/u/:shortURL', (req, res) => {
-  let longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  const shortURL = req.params.shortURL;
+  let longURL = "";
+
+  for (user in urlDatabase) {
+    if (urlDatabase[user][shortURL]) {
+      longURL = urlDatabase[user][shortURL];
+    }
+  }
+
+  if (longURL) {
+    res.redirect(longURL);
+  } else {
+    res.sendStatus(404);
+  }
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
