@@ -51,30 +51,37 @@ app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-  res.redirect('/urls');
+  const currentUser = getCurrentUser(req);
+
+  if (currentUser === '') {
+    res.redirect('/login');
+  } else {
+    res.redirect('/urls');
+  }
 });
 
 
 app.get('/urls', (req, res) => {
   const currentUser = getCurrentUser(req);
 
-  let templateVars = {
-    user_id: req.session['user_id'],
-    urls: urlDatabase[currentUser],
-    user_email: ''
-  };
-  if (currentUser != '') {
-    templateVars.user_email = users[templateVars.user_id].email;
-  };
-  res.render('urls_index', templateVars);
+  if (currentUser === '') {
+    res.status(401).send('Whoops! Please <a href="/login">login</a>.')
+  } else {
+    let templateVars = {
+      user_id: req.session['user_id'],
+      urls: urlDatabase[currentUser],
+      user_email: users[req.session['user_id']].email
+    };
+    res.render('urls_index', templateVars);
+  }
 });
 
 
-app.post('/urls/create', (req, res) => {
+app.post('/urls', (req, res) => {
   const currentUser = getCurrentUser(req);
 
   if (currentUser === '') {
-    res.sendStatus(403);
+    res.status(401).send('Whoops! Please <a href="/login">login</a>.');
   };
 
   let shortURL = generateRandomString();
@@ -91,15 +98,16 @@ app.get('/urls.json', (req, res) => {
 app.get('/urls/new', (req, res) => {
   const currentUser = getCurrentUser(req);
 
-  let templateVars = {
-    user_id: req.session['user_id'],
-    urls: urlDatabase[currentUser],
-    user_email: ''
-  };
-  if (getCurrentUser(req) != '') {
-    templateVars.user_email = users[templateVars.user_id].email;
-  };
-  res.render('urls_new', templateVars);
+  if (currentUser === '') {
+    res.status(401).send('Whoops! Please <a href="/login">login</a>.')
+  } else {
+    let templateVars = {
+      user_id: req.session['user_id'],
+      urls: urlDatabase[currentUser],
+      user_email: users[req.session['user_id']].email
+    };
+    res.render('urls_new', templateVars);
+  }
 });
 
 app.get('/hello', (req, res) => {
@@ -119,7 +127,7 @@ app.get('/u/:shortURL', (req, res) => {
   if (longURL) {
     res.redirect(longURL);
   } else {
-    res.sendStatus(404);
+    res.status(404).send('Sorry, URL does not exist.');
   }
 });
 
@@ -133,11 +141,34 @@ app.delete('/urls/:shortURL', (req, res) => {
 
 app.put('/urls/:shortURL', (req, res) => {
   const currentUser = getCurrentUser(req);
+  const shortURL = req.params.shortURL;
+  const longURL = req.body.longURL;
 
-  let shortURL = req.params.shortURL;
-  let longURL = req.body.longURL;
-  urlDatabase[currentUser][shortURL] = longURL;
-  res.redirect('/urls');
+  // check if no user is logged in
+  if (currentUser === '') {
+    res.status(401).send('Whoops! Please <a href="/login">login</a>.')
+    return;
+  }
+
+  // check if logged in user does not match the user that owns this url
+  for (user in urlDatabase) {
+    if (urlDatabase[user][shortURL] && currentUser != user) {
+      res.status(403).send('Sorry, URL does not belong to you.<br><a href="/">Return</a>');
+      return;
+    }
+  }
+
+  // if url exists - update url and redirect'
+  for (user in urlDatabase) {
+    if (urlDatabase[user][shortURL]) {
+      urlDatabase[currentUser][shortURL] = longURL;
+      res.redirect('/urls');
+      return;
+    }
+  }
+
+  // otherwise, url does not exist
+  res.status(404).send('Sorry, URL does not exist.<br><a href="/">Return</a>')
 });
 
 app.post('/login', (req, res) => {
@@ -158,22 +189,34 @@ app.post('/login', (req, res) => {
 
   if (loginPassed) {
     req.session.user_id = currentUser;
-    res.redirect('/')
+    res.redirect('/');
   } else {
-    res.sendStatus(403);
+    res.status(401).send('Sorry, that email and password combination is incorrect.<br><a href="/login">Return</a>');
   }
 });
 
 app.get('/login', (req, res) => {
-  res.render('urls_login')
+  const currentUser = getCurrentUser(req);
+
+  if (currentUser) {
+    res.redirect('/');
+    return;
+  }
+  res.render('urls_login');
 });
 
 app.post('/logout', (req, res) => {
   req.session = null;
-  res.redirect('/urls');
+  res.redirect('/');
 });
 
 app.get('/register', (req, res) => {
+  const currentUser = getCurrentUser(req);
+
+  if (currentUser) {
+    res.redirect('/');
+    return;
+  }
   res.render('urls_register');
 });
 
@@ -190,9 +233,9 @@ app.post('/register', (req, res) => {
   }
 
   if (!email || !password) {
-    res.sendStatus(400);
+    res.status(400).send('Please enter your email and password.<br><a href="/register">Return</a>');
   } else if (checkIfEmailExists(users)) {
-    res.sendStatus(400);
+    res.status(400).send('Sorry, that email already exists in our system.<br><a href="/register">Return</a>');
   } else {
     users[userID] = {};
     users[userID].id = userID;
@@ -202,24 +245,44 @@ app.post('/register', (req, res) => {
     urlDatabase[userID] = {};
 
     req.session.user_id = userID;
-    res.redirect('/urls');
+    res.redirect('/');
   }
 });
 
 app.get('/urls/:shortURL', (req, res) => {
-
   const currentUser = getCurrentUser(req);
+  const shortURL = req.params.shortURL;
 
-  let templateVars = {
-    user_id: req.session['user_id'],
-    urls: urlDatabase[currentUser],
-    user_email: '',
-    shortURL: req.params.shortURL,
-  };
-  if (getCurrentUser(req) != '') {
-    templateVars.user_email = users[templateVars.user_id].email;
-  };
-  res.render('urls_show', templateVars);
+  // check if no user is logged in
+  if (currentUser === '') {
+    res.status(401).send('Whoops! Please <a href="/login">login</a>.')
+    return;
+  }
+
+  // check if logged in user does not match the user that owns this url
+  for (user in urlDatabase) {
+    if (urlDatabase[user][shortURL] && currentUser != user) {
+      res.status(403).send('Sorry, URL does not belong to you.<br><a href="/">Return</a>');
+      return;
+    }
+  }
+
+  // if url exists - render 'urls_show'
+  for (user in urlDatabase) {
+    if (urlDatabase[user][shortURL]) {
+      let templateVars = {
+        shortURL: shortURL,
+        user_id: req.session['user_id'],
+        urls: urlDatabase[currentUser],
+        user_email: users[req.session['user_id']].email
+      };
+      res.render('urls_show', templateVars);
+      return;
+    }
+  }
+
+  // otherwise, url does not exist
+  res.status(404).send('Sorry, URL does not exist.<br><a href="/">Return</a>')
 });
 
 app.listen(PORT, () => {

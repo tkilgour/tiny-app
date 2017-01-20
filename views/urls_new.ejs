@@ -3,9 +3,9 @@
   <head>
     <title>TinyApp</title>
   </head>
-  <% include partials/_header %>
   <body>
-    <form action="/urls/create" method="POST">
+  <% include partials/_header %>
+    <form action="/urls" method="POST">
       <label for="longURL">Enter a URL:</label>
       <input id="longURL" type="text" name="longURL" value="http://">
       <input type="submit" value="Submit">

@@ -9,13 +9,13 @@
       <% for (url in urls) {%>
         <li>
           <form method="POST" action=<%= `/urls/${url}?_method=DELETE` %>>
-            <%= urls[url] %> → <%= url %>
+            <%= url %> – <%= urls[url] %>
             <a href=<%= `/urls/${url}` %>>Edit</a>
             <button type="submit">Delete 🗑</button>
           </form>
         </li>
       <% } %>
     </ul>
-    <a href="/urls/new">Create new shortened URL</a>
+    <a href="/urls/new">Create a New Short Link</a>
   </body>
 </html>

@@ -5,10 +5,13 @@
   </head>
   <body>
     <% include ../views/partials/_header %>
-    <h1>ShortURL: <%= shortURL %></h1>
+    Edit <%= shortURL %>:
     <form method="POST" action=<%= `/urls/${shortURL}?_method=PUT` %>>
       <input name="longURL" type="text" size=30 value=<%= urls[shortURL] %>/>
-      <button type="submit">Update</input>
+      <button type="submit">Update</button>
+    </form>
+    <form method="POST" action=<%= `/urls/${shortURL}?_method=DELETE` %>>
+      <button type="submit">Delete</button>
     </form>
   </body>
 </html>
