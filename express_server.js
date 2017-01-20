@@ -49,7 +49,7 @@ app.use(cookieSession({
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-  res.send('Hello!');
+  res.redirect('/urls');
 });
 
 
@@ -168,7 +168,7 @@ app.get('/login', (req, res) => {
 
 app.post('/logout', (req, res) => {
   req.session = null;
-  res.redirect('/');
+  res.redirect('/urls');
 });
 
 app.get('/register', (req, res) => {
@@ -200,7 +200,7 @@ app.post('/register', (req, res) => {
     urlDatabase[userID] = {};
 
     req.session.user_id = userID;
-    res.redirect('/');
+    res.redirect('/urls');
   }
 });
 
