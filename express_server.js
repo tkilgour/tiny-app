@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 
 const urlDatabase = {
@@ -32,7 +32,7 @@ function generateRandomString() {
 
 function getCurrentUser(req) {
   for (user in users) {
-    if (req.cookies['user_id'] === user) {
+    if (req.session['user_id'] === user) {
       return user;
     }
   }
@@ -40,7 +40,11 @@ function getCurrentUser(req) {
 }
 
 app.use(bodyParser.urlencoded({extended:true}));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['BrmrMunuQnTFo5L7'],
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 
 app.set('view engine', 'ejs');
 
@@ -53,7 +57,7 @@ app.get('/urls', (req, res) => {
   const currentUser = getCurrentUser(req);
 
   let templateVars = {
-    user_id: req.cookies['user_id'],
+    user_id: req.session['user_id'],
     urls: urlDatabase[currentUser],
     user_email: ''
   };
@@ -86,7 +90,7 @@ app.get('/urls/new', (req, res) => {
   const currentUser = getCurrentUser(req);
 
   let templateVars = {
-    user_id: req.cookies['user_id'],
+    user_id: req.session['user_id'],
     urls: urlDatabase[currentUser],
     user_email: ''
   };
@@ -151,7 +155,7 @@ app.post('/login', (req, res) => {
   }
 
   if (loginPassed) {
-    res.cookie('user_id', currentUser);
+    req.session.user_id = currentUser;
     res.redirect('/')
   } else {
     res.sendStatus(403);
@@ -163,7 +167,7 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/');
 });
 
@@ -195,7 +199,7 @@ app.post('/register', (req, res) => {
 
     urlDatabase[userID] = {};
 
-    res.cookie('user_id', userID);
+    req.session.user_id = userID;
     res.redirect('/');
   }
 });
@@ -205,7 +209,7 @@ app.get('/urls/:shortURL', (req, res) => {
   const currentUser = getCurrentUser(req);
 
   let templateVars = {
-    user_id: req.cookies['user_id'],
+    user_id: req.session['user_id'],
     urls: urlDatabase[currentUser],
     user_email: '',
     shortURL: req.params.shortURL,
